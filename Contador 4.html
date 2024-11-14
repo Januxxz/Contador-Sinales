@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contador de Sinais</title>
+<style>
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        font-family: Arial, sans-serif;
+    }
+    .section-toggle {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #ffffff;
+        background-color: #007bff;
+        padding: 10px 20px;
+        margin: 10px 0;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .section-toggle:hover {
+        background-color: #0056b3;
+    }
+    .counter-section {
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    .counter {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 5px;
+    }
+    .counter span {
+        min-width: 40px;
+        text-align: center;
+    }
+    button {
+        font-size: 1.2em;
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+    }
+    #f3-section, #fresnel-section, #f1-section, #f2-section {
+        display: none;
+        margin-top: 10px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+    }
+</style>
+</head>
+<body>
+
+<h1>Contador de Sinais</h1>
+
+<!-- Botões para expandir ou esconder as seções -->
+<button class="section-toggle" onclick="toggleSection('f1-section')">F1</button>
+<div id="f1-section"></div>
+
+<button class="section-toggle" onclick="toggleSection('f2-section')">F2</button>
+<div id="f2-section"></div>
+
+<button class="section-toggle" onclick="toggleSection('f3-section')">F3</button>
+<div id="f3-section"></div>
+
+<button class="section-toggle" onclick="toggleSection('fresnel-section')">Fresnel</button>
+<div id="fresnel-section"></div>
+
+<script>
+    // Definindo as seções e as cores
+    const sections = [
+        // F1
+        { name: "F1 Seta 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F1" },
+        { name: "F1 Seta 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F1" },
+        { name: "F1 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F1" },
+        { name: "F1 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F1" },
+        { name: "F1 Pedestre", colors: ["Verde", "Vermelho"], sectionType: "F1" },
+        { name: "F1 Ciclista", colors: ["Verde", "Vermelho"], sectionType: "F1" },
+        
+        // F2
+        { name: "F2 Seta 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F2" },
+        { name: "F2 Seta 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F2" },
+        { name: "F2 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F2" },
+        { name: "F2 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F2" },
+        { name: "F2 Pedestre", colors: ["Verde", "Vermelho"], sectionType: "F2" },
+        { name: "F2 Ciclista", colors: ["Verde", "Vermelho"], sectionType: "F2" },
+
+        // F3
+        { name: "F3 Seta 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F3" },
+        { name: "F3 Seta 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F3" },
+        { name: "F3 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F3" },
+        { name: "F3 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F3" },
+        { name: "F3 Pedestre", colors: ["Verde", "Vermelho"], sectionType: "F3" },
+        { name: "F3 Ciclista", colors: ["Verde", "Vermelho"], sectionType: "F3" },
+        
+        // Fresnel
+        { name: "Fresnel Seta 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "Fresnel" },
+        { name: "Fresnel Seta 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "Fresnel" },
+        { name: "Fresnel 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "Fresnel" },
+        { name: "Fresnel 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "Fresnel" },
+        { name: "Fresnel Pedestre", colors: ["Verde", "Vermelho"], sectionType: "Fresnel" },
+        { name: "Fresnel Ciclista", colors: ["Verde", "Vermelho"], sectionType: "Fresnel" }
+    ];
+
+    const f1Container = document.getElementById('f1-section');
+    const f2Container = document.getElementById('f2-section');
+    const f3Container = document.getElementById('f3-section');
+    const fresnelContainer = document.getElementById('fresnel-section');
+
+    // Função para carregar o contador do localStorage
+    function loadCounterValue(section, color) {
+        const value = localStorage.getItem(`${section}-${color}`);
+        return value ? parseInt(value) : 0;
+    }
+
+    // Função para salvar o contador no localStorage
+    function saveCounterValue(section, color, value) {
+        localStorage.setItem(`${section}-${color}`, value);
+    }
+
+    sections.forEach(section => {
+        const sectionDiv = document.createElement('div');
+        sectionDiv.className = 'counter-section';
+        sectionDiv.innerHTML = `<h2>${section.name}</h2>`;
+
+        section.colors.forEach(color => {
+            const counterDiv = document.createElement('div');
+            counterDiv.className = 'counter';
+
+            const counterValue = loadCounterValue(section.name, color);
+
+            // Criação dos botões e do contador
+            counterDiv.innerHTML = `
+                <button onclick="decrement('${section.name}', '${color}')">⬅️</button>
+                <span>${color}</span>
+                <span id="${section.name}-${color}">${counterValue}</span>
+                <button onclick="increment('${section.name}', '${color}')">➡️</button>
+            `;
+            sectionDiv.appendChild(counterDiv);
+        });
+
+        // Adiciona a seção ao contêiner correto (F1, F2, F3 ou Fresnel)
+        if (section.sectionType === "F1") {
+            f1Container.appendChild(sectionDiv);
+        } else if (section.sectionType === "F2") {
+            f2Container.appendChild(sectionDiv);
+        } else if (section.sectionType === "F3") {
+            f3Container.appendChild(sectionDiv);
+        } else {
+            fresnelContainer.appendChild(sectionDiv);
+        }
+    });
+
+    // Função para incrementar o contador
+    function increment(section, color) {
+        const counter = document.getElementById(`${section}-${color}`);
+        let currentValue = parseInt(counter.textContent);
+        currentValue += 1;
+        counter.textContent = currentValue;
+        saveCounterValue(section, color, currentValue); // Salva o novo valor no localStorage
+    }
+
+    // Função para decrementar o contador
+    function decrement(section, color) {
+        const counter = document.getElementById(`${section}-${color}`);
+        let currentValue = parseInt(counter.textContent);
+        if (currentValue > 0) {
+            currentValue -= 1;
+            counter.textContent = currentValue;
+            saveCounterValue(section, color, currentValue); // Salva o novo valor no localStorage
+        }
+    }
+
+    // Função para expandir e esconder a seção
+    function toggleSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (section.style.display === 'none') {
+            section.style.display = 'block';
+        } else {
+            section.style.display = 'none';
+        }
+    }
+</script>
+</body>
+</html>

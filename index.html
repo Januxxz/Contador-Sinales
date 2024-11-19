@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Contador de Sinais</title>
+<script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js"></script>
 <style>
     body {
         display: flex;
@@ -57,8 +59,6 @@
         background-color: #f8f9fa;
     }
 </style>
-<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"></script>
 </head>
 <body>
 
@@ -79,21 +79,22 @@
 
 <script>
     // Configuração do Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
+    import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js";
+
     const firebaseConfig = {
         apiKey: "SUA_API_KEY",
-        authDomain: "SEU_PROJETO.firebaseapp.com",
-        databaseURL: "https://SEU_PROJETO.firebaseio.com",
-        projectId: "SEU_PROJETO_ID",
-        storageBucket: "SEU_PROJETO.appspot.com",
-        messagingSenderId: "SENDER_ID",
-        appId: "APP_ID"
+        authDomain: "SEU_AUTH_DOMAIN",
+        projectId: "SEU_PROJECT_ID",
+        storageBucket: "SEU_STORAGE_BUCKET",
+        messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+        appId: "SEU_APP_ID",
+        databaseURL: "SEU_DATABASE_URL"
     };
 
-    // Inicializa o Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
 
-    // Definindo as seções e as cores
     const sections = [
         { name: "F1 Seta 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F1" },
         { name: "F1 Seta 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F1" },
@@ -101,75 +102,75 @@
         { name: "F1 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F1" },
         { name: "F1 Pedestre", colors: ["Verde", "Vermelho"], sectionType: "F1" },
         { name: "F1 Ciclista", colors: ["Verde", "Vermelho"], sectionType: "F1" },
-        { name: "F2 Seta 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F2" },
-        { name: "F2 Seta 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F2" },
-        { name: "F2 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F2" },
-        { name: "F2 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F2" },
-        { name: "F2 Pedestre", colors: ["Verde", "Vermelho"], sectionType: "F2" },
-        { name: "F2 Ciclista", colors: ["Verde", "Vermelho"], sectionType: "F2" },
-        { name: "F3 Seta 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F3" },
-        { name: "F3 Seta 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F3" },
-        { name: "F3 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F3" },
-        { name: "F3 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F3" },
-        { name: "F3 Pedestre", colors: ["Verde", "Vermelho"], sectionType: "F3" },
-        { name: "F3 Ciclista", colors: ["Verde", "Vermelho"], sectionType: "F3" },
-        { name: "Fresnel Seta 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "Fresnel" },
-        { name: "Fresnel Seta 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "Fresnel" },
-        { name: "Fresnel 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "Fresnel" },
-        { name: "Fresnel 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "Fresnel" },
-        { name: "Fresnel Pedestre", colors: ["Verde", "Vermelho"], sectionType: "Fresnel" },
-        { name: "Fresnel Ciclista", colors: ["Verde", "Vermelho"], sectionType: "Fresnel" }
+        // Outros...
     ];
 
-    const containers = {
-        F1: document.getElementById('f1-section'),
-        F2: document.getElementById('f2-section'),
-        F3: document.getElementById('f3-section'),
-        Fresnel: document.getElementById('fresnel-section')
-    };
+    const f1Container = document.getElementById('f1-section');
+    const f2Container = document.getElementById('f2-section');
+    const f3Container = document.getElementById('f3-section');
+    const fresnelContainer = document.getElementById('fresnel-section');
 
-    // Carregar os contadores do Firebase
-    async function loadCounters() {
-        for (const section of sections) {
-            const container = containers[section.sectionType];
-            const sectionDiv = document.createElement('div');
-            sectionDiv.className = 'counter-section';
-            sectionDiv.innerHTML = `<h2>${section.name}</h2>`;
+    async function loadCounterValue(section, color) {
+        const snapshot = await get(ref(database, `${section}/${color}`));
+        return snapshot.exists() ? snapshot.val() : 0;
+    }
 
-            for (const color of section.colors) {
-                const value = await db.ref(`${section.name}/${color}`).get().then(snapshot => snapshot.val() || 0);
+    async function saveCounterValue(section, color, value) {
+        await set(ref(database, `${section}/${color}`), value);
+    }
 
-                const counterDiv = document.createElement('div');
-                counterDiv.className = 'counter';
-                counterDiv.innerHTML = `
-                    <button onclick="updateCounter('${section.name}', '${color}', -1)">⬅️</button>
-                    <span>${color}</span>
-                    <span id="${section.name}-${color}">${value}</span>
-                    <button onclick="updateCounter('${section.name}', '${color}', 1)">➡️</button>
-                `;
-                sectionDiv.appendChild(counterDiv);
-            }
-            container.appendChild(sectionDiv);
+    sections.forEach(section => {
+        const sectionDiv = document.createElement('div');
+        sectionDiv.className = 'counter-section';
+        sectionDiv.innerHTML = `<h2>${section.name}</h2>`;
+
+        section.colors.forEach(color => {
+            const counterDiv = document.createElement('div');
+            counterDiv.className = 'counter';
+
+            counterDiv.innerHTML = `
+                <button onclick="decrement('${section.name}', '${color}')">⬅️</button>
+                <span>${color}</span>
+                <span id="${section.name}-${color}">Loading...</span>
+                <button onclick="increment('${section.name}', '${color}')">➡️</button>
+            `;
+            sectionDiv.appendChild(counterDiv);
+
+            // Carregar valores do Firebase
+            loadCounterValue(section.name, color).then(value => {
+                const counterSpan = document.getElementById(`${section.name}-${color}`);
+                counterSpan.textContent = value;
+            });
+        });
+
+        if (section.sectionType === "F1") f1Container.appendChild(sectionDiv);
+        else if (section.sectionType === "F2") f2Container.appendChild(sectionDiv);
+        else if (section.sectionType === "F3") f3Container.appendChild(sectionDiv);
+        else fresnelContainer.appendChild(sectionDiv);
+    });
+
+    function increment(section, color) {
+        const counterSpan = document.getElementById(`${section}-${color}`);
+        let currentValue = parseInt(counterSpan.textContent);
+        currentValue++;
+        counterSpan.textContent = currentValue;
+        saveCounterValue(section, color, currentValue);
+    }
+
+    function decrement(section, color) {
+        const counterSpan = document.getElementById(`${section}-${color}`);
+        let currentValue = parseInt(counterSpan.textContent);
+        if (currentValue > 0) {
+            currentValue--;
+            counterSpan.textContent = currentValue;
+            saveCounterValue(section, color, currentValue);
         }
     }
 
-    // Atualizar o contador no Firebase
-    function updateCounter(section, color, change) {
-        const counter = document.getElementById(`${section}-${color}`);
-        let currentValue = parseInt(counter.textContent) + change;
-        if (currentValue < 0) currentValue = 0;
-
-        counter.textContent = currentValue;
-        db.ref(`${section}/${color}`).set(currentValue);
-    }
-
-    // Mostrar ou esconder seções
     function toggleSection(sectionId) {
         const section = document.getElementById(sectionId);
         section.style.display = section.style.display === 'none' ? 'block' : 'none';
     }
-
-    loadCounters();
 </script>
 </body>
 </html>

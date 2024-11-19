@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Contador de Sinais</title>
-<script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js"></script>
 <style>
     body {
         display: flex;
@@ -78,31 +76,39 @@
 <div id="fresnel-section"></div>
 
 <script>
-    // Configuração do Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-    import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js";
-
-    const firebaseConfig = {
-        apiKey: "SUA_API_KEY",
-        authDomain: "SEU_AUTH_DOMAIN",
-        projectId: "SEU_PROJECT_ID",
-        storageBucket: "SEU_STORAGE_BUCKET",
-        messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-        appId: "SEU_APP_ID",
-        databaseURL: "SEU_DATABASE_URL"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-
+    // Definindo as seções e as cores
     const sections = [
+        // F1
         { name: "F1 Seta 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F1" },
         { name: "F1 Seta 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F1" },
         { name: "F1 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F1" },
         { name: "F1 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F1" },
         { name: "F1 Pedestre", colors: ["Verde", "Vermelho"], sectionType: "F1" },
         { name: "F1 Ciclista", colors: ["Verde", "Vermelho"], sectionType: "F1" },
-        // Outros...
+        
+        // F2
+        { name: "F2 Seta 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F2" },
+        { name: "F2 Seta 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F2" },
+        { name: "F2 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F2" },
+        { name: "F2 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F2" },
+        { name: "F2 Pedestre", colors: ["Verde", "Vermelho"], sectionType: "F2" },
+        { name: "F2 Ciclista", colors: ["Verde", "Vermelho"], sectionType: "F2" },
+
+        // F3
+        { name: "F3 Seta 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F3" },
+        { name: "F3 Seta 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F3" },
+        { name: "F3 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F3" },
+        { name: "F3 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "F3" },
+        { name: "F3 Pedestre", colors: ["Verde", "Vermelho"], sectionType: "F3" },
+        { name: "F3 Ciclista", colors: ["Verde", "Vermelho"], sectionType: "F3" },
+        
+        // Fresnel
+        { name: "Fresnel Seta 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "Fresnel" },
+        { name: "Fresnel Seta 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "Fresnel" },
+        { name: "Fresnel 300", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "Fresnel" },
+        { name: "Fresnel 200", colors: ["Verde", "Amarelo", "Vermelho"], sectionType: "Fresnel" },
+        { name: "Fresnel Pedestre", colors: ["Verde", "Vermelho"], sectionType: "Fresnel" },
+        { name: "Fresnel Ciclista", colors: ["Verde", "Vermelho"], sectionType: "Fresnel" }
     ];
 
     const f1Container = document.getElementById('f1-section');
@@ -110,66 +116,78 @@
     const f3Container = document.getElementById('f3-section');
     const fresnelContainer = document.getElementById('fresnel-section');
 
-    async function loadCounterValue(section, color) {
-        const snapshot = await get(ref(database, `${section}/${color}`));
-        return snapshot.exists() ? snapshot.val() : 0;
+    // Função para carregar o contador do localStorage
+    function loadCounterValue(section, color) {
+        const value = localStorage.getItem(${section}-${color});
+        return value ? parseInt(value) : 0;
     }
 
-    async function saveCounterValue(section, color, value) {
-        await set(ref(database, `${section}/${color}`), value);
+    // Função para salvar o contador no localStorage
+    function saveCounterValue(section, color, value) {
+        localStorage.setItem(${section}-${color}, value);
     }
 
     sections.forEach(section => {
         const sectionDiv = document.createElement('div');
         sectionDiv.className = 'counter-section';
-        sectionDiv.innerHTML = `<h2>${section.name}</h2>`;
+        sectionDiv.innerHTML = <h2>${section.name}</h2>;
 
         section.colors.forEach(color => {
             const counterDiv = document.createElement('div');
             counterDiv.className = 'counter';
 
+            const counterValue = loadCounterValue(section.name, color);
+
+            // Criação dos botões e do contador
             counterDiv.innerHTML = `
                 <button onclick="decrement('${section.name}', '${color}')">⬅️</button>
                 <span>${color}</span>
-                <span id="${section.name}-${color}">Loading...</span>
+                <span id="${section.name}-${color}">${counterValue}</span>
                 <button onclick="increment('${section.name}', '${color}')">➡️</button>
             `;
             sectionDiv.appendChild(counterDiv);
-
-            // Carregar valores do Firebase
-            loadCounterValue(section.name, color).then(value => {
-                const counterSpan = document.getElementById(`${section.name}-${color}`);
-                counterSpan.textContent = value;
-            });
         });
 
-        if (section.sectionType === "F1") f1Container.appendChild(sectionDiv);
-        else if (section.sectionType === "F2") f2Container.appendChild(sectionDiv);
-        else if (section.sectionType === "F3") f3Container.appendChild(sectionDiv);
-        else fresnelContainer.appendChild(sectionDiv);
+        // Adiciona a seção ao contêiner correto (F1, F2, F3 ou Fresnel)
+        if (section.sectionType === "F1") {
+            f1Container.appendChild(sectionDiv);
+        } else if (section.sectionType === "F2") {
+            f2Container.appendChild(sectionDiv);
+        } else if (section.sectionType === "F3") {
+            f3Container.appendChild(sectionDiv);
+        } else {
+            fresnelContainer.appendChild(sectionDiv);
+        }
     });
 
+    // Função para incrementar o contador
     function increment(section, color) {
-        const counterSpan = document.getElementById(`${section}-${color}`);
-        let currentValue = parseInt(counterSpan.textContent);
-        currentValue++;
-        counterSpan.textContent = currentValue;
-        saveCounterValue(section, color, currentValue);
+        const counter = document.getElementById(${section}-${color});
+        let currentValue = parseInt(counter.textContent);
+        currentValue += 1;
+        counter.textContent = currentValue;
+        saveCounterValue(section, color, currentValue); // Salva o novo valor no localStorage
     }
 
+    // Função para decrementar o contador
     function decrement(section, color) {
-        const counterSpan = document.getElementById(`${section}-${color}`);
-        let currentValue = parseInt(counterSpan.textContent);
+        const counter = document.getElementById(${section}-${color});
+        let currentValue = parseInt(counter.textContent);
         if (currentValue > 0) {
-            currentValue--;
-            counterSpan.textContent = currentValue;
-            saveCounterValue(section, color, currentValue);
+            currentValue -= 1;
+            counter.textContent = currentValue;
+            saveCounterValue(section, color, currentValue); // Salva o novo valor no localStorage
         }
     }
 
+    // Função para expandir e esconder a seção
     function toggleSection(sectionId) {
         const section = document.getElementById(sectionId);
-        section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        if (section.style.display === 'none') {
+            section.style.display = 'block';
+        } else {
+            section.style.display = 'none';
+        }
     }
 </script>
 </body>

@@ -139,12 +139,12 @@
             const counterValue = loadCounterValue(section.name, color);
 
             // Criação dos botões e do contador
-            counterDiv.innerHTML = `
+            counterDiv.innerHTML = 
                 <button onclick="decrement('${section.name}', '${color}')">⬅️</button>
                 <span>${color}</span>
                 <span id="${section.name}-${color}">${counterValue}</span>
                 <button onclick="increment('${section.name}', '${color}')">➡️</button>
-            `;
+            ;
             sectionDiv.appendChild(counterDiv);
         });
 
